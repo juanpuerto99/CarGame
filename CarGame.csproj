@@ -42,11 +42,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Car.cs" />
+    <Compile Include="DesertStorm.cs" />
+    <Compile Include="Entity.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="General.cs" />
+    <Compile Include="HitBox.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scenary\Desert\Cactus.cs" />
+    <Compile Include="Scenary\Desert\Desert.cs" />
+    <Compile Include="Scenary\Desert\TumbleWeed.cs" />
+    <Compile Include="Scenary\Scenary.cs" />
     <Compile Include="Terrain.cs" />
   </ItemGroup>
   <ItemGroup>

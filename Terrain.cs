@@ -39,13 +39,20 @@ namespace CarGame
         }
         public void Update()
         {
+            if (isDisposed) return;
+
             virtualX -= Speed;
             Zone.X = (int)Math.Floor(virtualX);
 
-            if (Zone.Right < 0) Dispose();
+            if (Zone.Right < 0)
+            {
+                Dispose();
+                return;
+            }
         }
         public void Draw(SpriteBatch spriteBatch)
         {
+            if (isDisposed) return;
             spriteBatch.Draw(Texture, Zone, null, Color.White, 0f, Origin, SpriteEffects.None, 1f);
         }
         public void Dispose()
