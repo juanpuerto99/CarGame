@@ -75,4 +75,14 @@ namespace CarGame.Scenary.Desert
             IsDisposed = true;
         }
     }
+
+    public struct CactusData : EntityData
+    {
+        public Point Position;
+
+        public CactusData(Point position)
+        {
+            Position = position;
+        }
+    }
 }

@@ -24,6 +24,7 @@ namespace CarGame.Scenary.Desert
 
             HitBox = new HitBox((int)Math.Floor(Rectangle.X - Origin.X), (int)Math.Floor(Rectangle.Y - Origin.Y), 11, 32, 28, 11);
             PrevHitBox = HitBox.Clone();
+            Direction = Convert.ToBoolean(General.Random.Next(0, 2));
         }
         public override void Update(GameTime gameTime)
         {
@@ -97,6 +98,17 @@ namespace CarGame.Scenary.Desert
         public void Break()
         {
 
+        }
+    }
+    public struct TumbleWeedData : EntityData
+    {
+        public Point Position;
+        public bool Direction;
+
+        public TumbleWeedData(Point position, bool direction)
+        {
+            Position = position;
+            Direction = direction;
         }
     }
 }

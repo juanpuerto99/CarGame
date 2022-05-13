@@ -32,20 +32,24 @@ namespace CarGame
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+
         }
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
+            this.IsFixedTimeStep = true;
+            //graphics.IsFullScreen = true;
+            IsMouseVisible = true;
+            graphics.SynchronizeWithVerticalRetrace = true;
+            this.graphics.PreferredBackBufferWidth = 640 * 2;
+            this.graphics.PreferredBackBufferHeight = 360 * 2;
+            graphics.ApplyChanges();
 
             base.Initialize();
         }
         protected override void LoadContent()
         {
-            this.graphics.PreferredBackBufferWidth = 1600;
-            this.graphics.PreferredBackBufferHeight = 900;
             //this.graphics.PreferredBackBufferWidth = 4 * 300;
             //this.graphics.PreferredBackBufferHeight = 3 * 300;
-            this.graphics.ApplyChanges();
 
             spriteBatch = new SpriteBatch(GraphicsDevice);
             screenRender = new RenderTarget2D(GraphicsDevice, 640, 360);
@@ -55,6 +59,7 @@ namespace CarGame
             General.SpriteBatch = spriteBatch;
             General.Pixel = new Texture2D(GraphicsDevice, 1, 1);
             General.Pixel.SetData(new Color[1] { Color.White });
+            General.Random = new Random(GetHashCode());
 
             General.Car = new Car();
             General.ScenaryManager = new Desert();
@@ -71,14 +76,22 @@ namespace CarGame
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            if (General.Speed < 3)
+            General.GameTime = gameTime;
+
+            if (General.Speed < 5)
             {
-                General.Speed = Math.Min(General.Speed + 0.01f, 3);
+                General.Speed = Math.Min(General.Speed + 0.01f, 5);
                 for (int i = 0; i < General.Terrains[Terrain.eTerrainType.Ground].Count; i++)
                     General.Terrains[Terrain.eTerrainType.Ground][i].Speed = General.Speed;
 
                 for (int i = 0; i < General.Terrains[Terrain.eTerrainType.Front1].Count; i++)
-                    General.Terrains[Terrain.eTerrainType.Front1][i].Speed = General.Speed * 1.3f;
+                    General.Terrains[Terrain.eTerrainType.Front1][i].Speed = General.Speed;
+
+                for (int i = 0; i < General.Terrains[Terrain.eTerrainType.Front2].Count; i++)
+                    General.Terrains[Terrain.eTerrainType.Front2][i].Speed = General.Speed * 1.3f;
+
+                for (int i = 0; i < General.Terrains[Terrain.eTerrainType.Front3].Count; i++)
+                    General.Terrains[Terrain.eTerrainType.Front3][i].Speed = General.Speed * 1.5f;
 
                 for (int i = 0; i < General.Terrains[Terrain.eTerrainType.Back1].Count; i++)
                     General.Terrains[Terrain.eTerrainType.Back1][i].Speed = General.Speed * 0.7f;
@@ -129,6 +142,12 @@ namespace CarGame
 
             for (int i = 0; i < General.Terrains[Terrain.eTerrainType.Front1].Count; i++)
                 General.Terrains[Terrain.eTerrainType.Front1][i].Draw(spriteBatch);
+
+            for (int i = 0; i < General.Terrains[Terrain.eTerrainType.Front2].Count; i++)
+                General.Terrains[Terrain.eTerrainType.Front2][i].Draw(spriteBatch);
+
+            for (int i = 0; i < General.Terrains[Terrain.eTerrainType.Front3].Count; i++)
+                General.Terrains[Terrain.eTerrainType.Front3][i].Draw(spriteBatch);
 
             //spriteBatch.Draw(General.TerrainSpriteSheet, new Rectangle(100, 100, 48, 96), new Rectangle(0, 1056, 48, 96), Color.White);
             spriteBatch.End();

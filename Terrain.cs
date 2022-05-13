@@ -27,8 +27,13 @@ namespace CarGame
             Ground,
             Front1,
             Front2,
+            Front3,
         }
 
+        public Terrain(Rectangle sourcee, eTerrainType TerrainType, float x, float y)
+        {
+
+        }
         public Terrain(Texture2D texture, eTerrainType TerrainType, float x, float y)
         {
             this.Texture = texture;

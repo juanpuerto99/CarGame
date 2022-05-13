@@ -1,22 +1,15 @@
-﻿using System;
-
-namespace CarGame
+﻿namespace CarGame
 {
-#if WINDOWS || LINUX
-    /// <summary>
-    /// The main class.
-    /// </summary>
-    public static class Program
+    public class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main()
+        public static void Main(string[] args)
         {
-            using (var game = new Game1())
+            //using (Tests.AnimationTest game = new Tests.AnimationTest())
+            using (Tests.CarBuildScreen game = new Tests.CarBuildScreen())
+            //using (Game1 game = new Game1())
+            {
                 game.Run();
+            }
         }
     }
-#endif
 }

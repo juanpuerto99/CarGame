@@ -1,4 +1,5 @@
 ﻿using CarGame.Scenary;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace CarGame
     {
         public static GraphicsDevice GraphicsDevice;
         public static SpriteBatch SpriteBatch;
+        public static GameTime GameTime;
 
         public static Car Car;
 
@@ -21,7 +23,9 @@ namespace CarGame
         public static Texture2D Pixel;
 
         public static float Speed = 2f;
-        public static Texture2D TerrainSpriteSheet; 
+        public static Texture2D TerrainSpriteSheet;
+
+        public static Random Random;
 
         public static float DeltaTime = 1f;
     }

@@ -51,6 +51,9 @@ namespace CarGame
             }
         }
 
+        private bool enable = true;
+        public bool Enable { get => enable; set => enable = value; }
+
         private int x;
         public int X
         {
@@ -94,10 +97,12 @@ namespace CarGame
 
         public bool CheckCollision(HitBox hitbox)
         {
+            if (!enable || !hitbox.enable) return false;
             return rectangle.Contains(hitbox.rectangle);
         }
         public bool CheckCollision(HitBox previousHitBox, HitBox currentHitBox)
         {
+            if (!enable || !currentHitBox.enable) return false;
             return false;
             //if (CheckCollision(currentHitBox))
             //{
@@ -108,6 +113,7 @@ namespace CarGame
         }
         public CollisionSide? CheckCollisionSide(HitBox previousHitBox, HitBox currentHitBox)
         {
+            if (!enable || !currentHitBox.enable) return null;
             if (!rectangle.Contains(currentHitBox.rectangle)) return null;
 
             if (previousHitBox.Rectangle.Right < rectangle.Left) return CollisionSide.Left;
@@ -119,15 +125,6 @@ namespace CarGame
         public HitBox Clone()
         {
             return (HitBox)this.MemberwiseClone();
-            HitBox hb = new HitBox();// { paddingX = this.paddingX, paddingY = this.paddingY, x = this.x, y = this.y, width = this.width, height = this.height, rectangle = this.rectangle };
-            hb.paddingX = paddingX;
-            hb.paddingY = paddingY;
-            hb.x = x;
-            hb.width = width;
-            hb.height = height;
-            hb.rectangle = rectangle;
-
-            return hb;
         }
 
         public enum CollisionSide
