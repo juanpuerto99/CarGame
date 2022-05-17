@@ -6,10 +6,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace CarGame.Tests
 {
-    internal class CarBuildScreen : Game
+    public class CarBuildScreen : Game
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
@@ -20,6 +22,12 @@ namespace CarGame.Tests
 
         SpriteFont font;
         string debugInfo;
+
+        Dictionary<CarPart, Rectangle[]> SpriteSheetZones = new Dictionary<CarPart, Rectangle[]>();
+
+        private Dictionary<CarPart, IPartFrame> copyFrameData = null;
+        private Tuple<CarPart, IPartFrame>? copyPartData = null;
+        //Rectangle[] SpriteSheetZones;
 
         public CarBuildScreen() : base()
         {
@@ -45,6 +53,9 @@ namespace CarGame.Tests
 
             font = Content.Load<SpriteFont>("Fonts/Arial12");
             carSpriteSheet = Content.Load<Texture2D>("Textures/Car");
+
+            //Spritesheet
+            CreateSpriteSheets();
 
             Animations = new Dictionary<CarAnimationType, CarAnimation>();
             animationFrame = 0;
@@ -72,11 +83,84 @@ namespace CarGame.Tests
             PartXSite.Add(CarPart.FrontSeat1, null);
             PartXSite.Add(CarPart.FrontSeat2, null);
 
-            PartXSite[CarPart.Body] = CurrentAnimation.Frames[animationFrame].FramesxPart[CarPart.Body];
-            PartXSite[CarPart.BodyDown] = CurrentAnimation.Frames[animationFrame].FramesxPart[CarPart.BodyDown];
             UpdatePartXSite();
 
             base.LoadContent();
+        }
+        private void CreateSpriteSheets()
+        {
+            SpriteSheetZones = new Dictionary<CarPart, Rectangle[]>();
+            int count = 0;
+
+            //Body
+            SpriteSheetZones.Add(CarPart.Body, new Rectangle[14]);
+            count = 0;
+            for (int i = 0; i < 6; i++) SpriteSheetZones[CarPart.Body][count + i] = new Rectangle(144 * i, 64 * 0, 144, 64);
+            count += 6;
+            for (int i = 0; i < 4; i++) SpriteSheetZones[CarPart.Body][count + i] = new Rectangle(144 * i, 64 * 1, 144, 64);
+            count += 4;
+            for (int i = 0; i < 4; i++) SpriteSheetZones[CarPart.Body][count + i] = new Rectangle(144 * i, 64 * 2, 144, 64);
+            count += 4;
+
+            //Body Down
+            SpriteSheetZones.Add(CarPart.BodyDown, new Rectangle[3]);
+            count = 0;
+            for (int i = 0; i < 3; i++) SpriteSheetZones[CarPart.BodyDown][count + i] = new Rectangle(144 * i, 320, 144, 32);
+            count += 3;
+
+            //Body Back
+            SpriteSheetZones.Add(CarPart.BodyBack, new Rectangle[4]);
+            count = 0;
+            for (int i = 0; i < 4; i++) SpriteSheetZones[CarPart.BodyBack][count + i] = new Rectangle(96 * i, 352, 96, 48);
+            count += 4;
+
+            //BackSeat
+            SpriteSheetZones.Add(CarPart.BackSeat, new Rectangle[5]);
+            count = 0;
+            for (int i = 0; i < 5; i++) SpriteSheetZones[CarPart.BackSeat][count + i] = new Rectangle(32 * i, 400, 32, 32);
+            count += 5;
+
+            //Front Seats
+            SpriteSheetZones.Add(CarPart.FrontSeat1, new Rectangle[3]);
+            SpriteSheetZones.Add(CarPart.FrontSeat2, new Rectangle[3]);
+            count = 0;
+            for (int i = 0; i < 3; i++)
+            {
+                SpriteSheetZones[CarPart.FrontSeat1][count + i] = new Rectangle(160 + 32 * i, 400, 32, 32);
+                SpriteSheetZones[CarPart.FrontSeat2][count + i] = SpriteSheetZones[CarPart.FrontSeat1][count + i];
+            }
+            count += 3;
+
+            //Wheels
+            SpriteSheetZones.Add(CarPart.Wheel1, new Rectangle[8]);
+            SpriteSheetZones.Add(CarPart.Wheel2, new Rectangle[8]);
+            SpriteSheetZones.Add(CarPart.Wheel3, new Rectangle[8]);
+            SpriteSheetZones.Add(CarPart.Wheel4, new Rectangle[8]);
+            count = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                SpriteSheetZones[CarPart.Wheel1][count + i] = new Rectangle(32 * i, 432, 32, 32);
+                SpriteSheetZones[CarPart.Wheel2][count + i] = SpriteSheetZones[CarPart.Wheel1][count + i];
+                SpriteSheetZones[CarPart.Wheel3][count + i] = SpriteSheetZones[CarPart.Wheel1][count + i];
+                SpriteSheetZones[CarPart.Wheel4][count + i] = SpriteSheetZones[CarPart.Wheel1][count + i];
+            }
+            count += 8;
+
+            //Door
+            SpriteSheetZones.Add(CarPart.Door, new Rectangle[3]);
+            count = 0;
+            for (int i = 0; i < 3; i++) SpriteSheetZones[CarPart.Door][count + i] = new Rectangle(48 * i, 464, 48, 48);
+            count += 3;
+
+            //Capo / Motor
+            SpriteSheetZones.Add(CarPart.Motor, new Rectangle[12]);
+            count = 0;
+            for (int i = 0; i < 6; i++) SpriteSheetZones[CarPart.Motor][count + i] = new Rectangle(464 + 48 * i, 400, 48, 32);
+            count += 6;
+            for (int i = 0; i < 3; i++) SpriteSheetZones[CarPart.Motor][count + i] = new Rectangle(464 + 48 * i, 432, 48, 32);
+            count += 3;
+            for (int i = 0; i < 3; i++) SpriteSheetZones[CarPart.Motor][count + i] = new Rectangle(464 + 48 * i, 464, 48, 32);
+            count += 3;
         }
         private void CreateAnimations()
         {
@@ -87,8 +171,8 @@ namespace CarGame.Tests
             RunningAnimation.Frames = new NewCarAnimationFrame[1];
             RunningAnimation.Frames[0] = new NewCarAnimationFrame();
             RunningAnimation.Frames[0].Duration = 16f;
-            RunningAnimation.Frames[0].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(0, 0, 144, 64)));
-            RunningAnimation.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 18, 96, 48), new Rectangle(0, 352, 96, 48)));
+            RunningAnimation.Frames[0].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), SpriteSheetZones[CarPart.Body][0]));
+            RunningAnimation.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 18, 96, 48), SpriteSheetZones[CarPart.BodyBack][0]));
             RunningAnimation.Frames[0].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 43, 144, 32), new Rectangle(0, 320, 144, 32)));
             RunningAnimation.Frames[0].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 24, 48, 48), new Rectangle(0, 464, 48, 48)));
             RunningAnimation.Frames[0].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 24, 48, 32), new Rectangle(464, 400, 48, 32)));
@@ -107,8 +191,8 @@ namespace CarGame.Tests
             RunningShineAnimation.Frames = new NewCarAnimationFrame[6];
             RunningShineAnimation.Frames[0] = new NewCarAnimationFrame();
             RunningShineAnimation.Frames[0].Duration = 1600f;
-            RunningShineAnimation.Frames[0].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(0, 0, 144, 64)));
-            RunningShineAnimation.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 18, 96, 48), new Rectangle(0, 352, 96, 48)));
+            RunningShineAnimation.Frames[0].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), SpriteSheetZones[CarPart.Body][0]));
+            RunningShineAnimation.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 18, 96, 48), SpriteSheetZones[CarPart.BodyBack][0]));
             RunningShineAnimation.Frames[0].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 43, 144, 32), new Rectangle(0, 320, 144, 32)));
             RunningShineAnimation.Frames[0].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 24, 48, 48), new Rectangle(0, 464, 48, 48)));
             RunningShineAnimation.Frames[0].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 24, 48, 32), new Rectangle(464, 400, 48, 32)));
@@ -122,27 +206,27 @@ namespace CarGame.Tests
 
             RunningShineAnimation.Frames[1] = new NewCarAnimationFrame();
             RunningShineAnimation.Frames[1].Duration = 120f;
-            RunningShineAnimation.Frames[1].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(144 * 1, 0, 144, 64)));
+            RunningShineAnimation.Frames[1].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), SpriteSheetZones[CarPart.Body][1]));
             RunningShineAnimation.Frames[1].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 24, 48, 32), new Rectangle(464 + 48 * 1, 400, 48, 32)));
 
             RunningShineAnimation.Frames[2] = new NewCarAnimationFrame();
             RunningShineAnimation.Frames[2].Duration = 80f;
-            RunningShineAnimation.Frames[2].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(144 * 2, 0, 144, 64)));
+            RunningShineAnimation.Frames[2].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), SpriteSheetZones[CarPart.Body][2]));
             RunningShineAnimation.Frames[2].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 24, 48, 32), new Rectangle(464 + 48 * 2, 400, 48, 32)));
 
             RunningShineAnimation.Frames[3] = new NewCarAnimationFrame();
             RunningShineAnimation.Frames[3].Duration = 60f;
-            RunningShineAnimation.Frames[3].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(144 * 3, 0, 144, 64)));
+            RunningShineAnimation.Frames[3].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), SpriteSheetZones[CarPart.Body][3]));
             RunningShineAnimation.Frames[3].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 24, 48, 32), new Rectangle(464 + 48 * 3, 400, 48, 32)));
 
             RunningShineAnimation.Frames[4] = new NewCarAnimationFrame();
             RunningShineAnimation.Frames[4].Duration = 60f;
-            RunningShineAnimation.Frames[4].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(144 * 4, 0, 144, 64)));
+            RunningShineAnimation.Frames[4].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), SpriteSheetZones[CarPart.Body][4]));
             RunningShineAnimation.Frames[4].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 24, 48, 32), new Rectangle(464 + 48 * 4, 400, 48, 32)));
 
             RunningShineAnimation.Frames[5] = new NewCarAnimationFrame();
             RunningShineAnimation.Frames[5].Duration = 60f;
-            RunningShineAnimation.Frames[5].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(144 * 5, 0, 144, 64)));
+            RunningShineAnimation.Frames[5].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), SpriteSheetZones[CarPart.Body][5]));
             RunningShineAnimation.Frames[5].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 24, 48, 32), new Rectangle(464 + 48 * 5, 400, 48, 32)));
 
 
@@ -180,7 +264,7 @@ namespace CarGame.Tests
             ReturnFromLeft.Frames[0].Duration = 128;
             ReturnFromLeft.Frames[0].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 8, 144, 64), new Rectangle(144 * 1, 64, 144, 64)));
             ReturnFromLeft.Frames[0].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 40, 144, 32), new Rectangle(0, 320, 144, 32)));
-            ReturnFromLeft.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 15, 96, 48), new Rectangle(0, 352, 96, 48)));
+            ReturnFromLeft.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 15, 96, 48), SpriteSheetZones[CarPart.BodyBack][0]));
             ReturnFromLeft.Frames[0].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 21, 48, 48), new Rectangle(0, 464, 48, 48)));
             ReturnFromLeft.Frames[0].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(512, 432, 48, 32)));
             ReturnFromLeft.Frames[0].FramesxPart.Add(CarPart.Wheel1, new WheelFrame(new Rectangle(9, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
@@ -195,7 +279,7 @@ namespace CarGame.Tests
             ReturnFromLeft.Frames[1].Duration = 128;
             ReturnFromLeft.Frames[1].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 9, 144, 64), new Rectangle(0, 64, 144, 64)));
             ReturnFromLeft.Frames[1].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 41, 144, 32), new Rectangle(0, 320, 144, 32)));
-            ReturnFromLeft.Frames[1].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 16, 96, 48), new Rectangle(0, 352, 96, 48)));
+            ReturnFromLeft.Frames[1].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 16, 96, 48), SpriteSheetZones[CarPart.BodyBack][0]));
             ReturnFromLeft.Frames[1].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 22, 48, 48), new Rectangle(0, 464, 48, 48)));
             ReturnFromLeft.Frames[1].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(464, 432, 48, 32)));
 
@@ -273,7 +357,7 @@ namespace CarGame.Tests
             ReturnFromSuperLeftAnimation.Frames[1].Duration = 48;
             ReturnFromSuperLeftAnimation.Frames[1].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 8, 144, 64), new Rectangle(144 * 1, 64, 144, 64)));
             ReturnFromSuperLeftAnimation.Frames[1].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 40, 144, 32), new Rectangle(0, 320, 144, 32)));
-            ReturnFromSuperLeftAnimation.Frames[1].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 15, 96, 48), new Rectangle(0, 352, 96, 48)));
+            ReturnFromSuperLeftAnimation.Frames[1].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 15, 96, 48), SpriteSheetZones[CarPart.BodyBack][0]));
             ReturnFromSuperLeftAnimation.Frames[1].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 21, 48, 48), new Rectangle(0, 464, 48, 48)));
             ReturnFromSuperLeftAnimation.Frames[1].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(512, 432, 48, 32)));
             ReturnFromSuperLeftAnimation.Frames[1].FramesxPart.Add(CarPart.Wheel1, new WheelFrame(new Rectangle(9, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
@@ -288,14 +372,14 @@ namespace CarGame.Tests
             ReturnFromSuperLeftAnimation.Frames[2].Duration = 48;
             ReturnFromSuperLeftAnimation.Frames[2].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 9, 144, 64), new Rectangle(0, 64, 144, 64)));
             ReturnFromSuperLeftAnimation.Frames[2].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 41, 144, 32), new Rectangle(0, 320, 144, 32)));
-            ReturnFromSuperLeftAnimation.Frames[2].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 16, 96, 48), new Rectangle(0, 352, 96, 48)));
+            ReturnFromSuperLeftAnimation.Frames[2].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 16, 96, 48), SpriteSheetZones[CarPart.BodyBack][0]));
             ReturnFromSuperLeftAnimation.Frames[2].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 22, 48, 48), new Rectangle(0, 464, 48, 48)));
             ReturnFromSuperLeftAnimation.Frames[2].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(464, 432, 48, 32)));
 
             ReturnFromSuperLeftAnimation.Frames[3] = new NewCarAnimationFrame();
             ReturnFromSuperLeftAnimation.Frames[3].Duration = 80;
-            ReturnFromSuperLeftAnimation.Frames[3].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(0, 0, 144, 64)));
-            ReturnFromSuperLeftAnimation.Frames[3].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 18, 96, 48), new Rectangle(0, 352, 96, 48)));
+            ReturnFromSuperLeftAnimation.Frames[3].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), SpriteSheetZones[CarPart.Body][0]));
+            ReturnFromSuperLeftAnimation.Frames[3].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 18, 96, 48), SpriteSheetZones[CarPart.BodyBack][0]));
             ReturnFromSuperLeftAnimation.Frames[3].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 43, 144, 32), new Rectangle(0, 320, 144, 32)));
             ReturnFromSuperLeftAnimation.Frames[3].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 24, 48, 48), new Rectangle(0, 464, 48, 48)));
             ReturnFromSuperLeftAnimation.Frames[3].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 24, 48, 32), new Rectangle(464, 400, 48, 32)));
@@ -312,14 +396,125 @@ namespace CarGame.Tests
             ReturnFromSuperLeftAnimation.Frames[4].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 25, 48, 32), new Rectangle(464, 464, 48, 32)));
 
 
+            //Right
+            CarAnimation TurningRightAnimation = new CarAnimation();
+            TurningRightAnimation.Frames = new NewCarAnimationFrame[2];
+            TurningRightAnimation.Frames[0] = new NewCarAnimationFrame();
+            TurningRightAnimation.Frames[0].Duration = 128;
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(0, 128, 144, 64)));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 41, 144, 32), new Rectangle(0, 320, 144, 32)));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 17, 96, 48), new Rectangle(96, 352, 96, 48)));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 22, 48, 48), new Rectangle(0, 464, 48, 48)));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(464, 432, 48, 32)));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel1, new WheelFrame(new Rectangle(9, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel2, new WheelFrame(new Rectangle(89, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel3, new WheelFrame(new Rectangle(), new Rectangle(), new Rectangle(), false));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel4, new WheelFrame(new Rectangle(), new Rectangle(), new Rectangle(), false));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.FrontSeat1, new PartFrame(new Rectangle(64, 25, 16, 32), new Rectangle(160, 400, 16, 32)));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.FrontSeat2, new PartFrame(new Rectangle(51, 29, 16, 32), new Rectangle(160, 400, 16, 32)));
+            TurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.BackSeat, new PartFrame(new Rectangle(15, 26, 32, 32), new Rectangle(32, 400, 32, 32)));
+
+            TurningRightAnimation.Frames[1] = new NewCarAnimationFrame();
+            TurningRightAnimation.Frames[1].Duration = 128;
+            TurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 12, 144, 64), new Rectangle(144 * 1, 128, 144, 64)));
+            TurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 21, 48, 48), new Rectangle(0, 464, 48, 48)));
+            TurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 40, 144, 32), new Rectangle(0, 320, 144, 32)));
+            TurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 16, 96, 48), new Rectangle(96, 352, 96, 48)));
+            TurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(512, 432, 48, 32)));
+
+
+            //Return from Right
+            CarAnimation ReturnFromRight = new CarAnimation();
+            ReturnFromRight.Frames = new NewCarAnimationFrame[2];
+            ReturnFromRight.Frames[0] = new NewCarAnimationFrame();
+            ReturnFromRight.Frames[0].Duration = 128;
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 12, 144, 64), new Rectangle(144 * 1, 128, 144, 64)));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 40, 144, 32), new Rectangle(0, 320, 144, 32)));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 16, 96, 48), new Rectangle(96, 352, 96, 48)));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 21, 48, 48), new Rectangle(0, 464, 48, 48)));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(512, 432, 48, 32)));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.Wheel1, new WheelFrame(new Rectangle(9, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.Wheel2, new WheelFrame(new Rectangle(89, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.Wheel3, new WheelFrame(new Rectangle(), new Rectangle(), new Rectangle(), false));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.Wheel4, new WheelFrame(new Rectangle(), new Rectangle(), new Rectangle(), false));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.FrontSeat1, new PartFrame(new Rectangle(64, 25, 16, 32), new Rectangle(160, 400, 16, 32)));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.FrontSeat2, new PartFrame(new Rectangle(51, 29, 16, 32), new Rectangle(160, 400, 16, 32)));
+            ReturnFromRight.Frames[0].FramesxPart.Add(CarPart.BackSeat, new PartFrame(new Rectangle(15, 26, 32, 32), new Rectangle(32, 400, 32, 32)));
+
+            ReturnFromRight.Frames[1] = new NewCarAnimationFrame();
+            ReturnFromRight.Frames[1].Duration = 128;
+            ReturnFromRight.Frames[1].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(0, 128, 144, 64)));
+            ReturnFromRight.Frames[1].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 41, 144, 32), new Rectangle(0, 320, 144, 32)));
+            ReturnFromRight.Frames[1].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 17, 96, 48), new Rectangle(96, 352, 96, 48)));
+            ReturnFromRight.Frames[1].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 22, 48, 48), new Rectangle(0, 464, 48, 48)));
+            ReturnFromRight.Frames[1].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(464, 432, 48, 32)));
+
+
+            //Super Right
+            CarAnimation SuperTurningRightAnimation = new CarAnimation();
+            SuperTurningRightAnimation.Frames = new NewCarAnimationFrame[4];
+            SuperTurningRightAnimation.Frames[0] = new NewCarAnimationFrame();
+            SuperTurningRightAnimation.Frames[0].Duration = 128;
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 11, 144, 64), new Rectangle(0, 128, 144, 64)));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 41, 144, 32), new Rectangle(0, 320, 144, 32)));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 17, 96, 48), new Rectangle(96, 352, 96, 48)));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 22, 48, 48), new Rectangle(0, 464, 48, 48)));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(464, 432, 48, 32)));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel1, new WheelFrame(new Rectangle(9, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel2, new WheelFrame(new Rectangle(89, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel3, new WheelFrame(new Rectangle(), new Rectangle(), new Rectangle(), false));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel4, new WheelFrame(new Rectangle(), new Rectangle(), new Rectangle(), false));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.FrontSeat1, new PartFrame(new Rectangle(64, 25, 16, 32), new Rectangle(160, 400, 16, 32)));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.FrontSeat2, new PartFrame(new Rectangle(51, 29, 16, 32), new Rectangle(160, 400, 16, 32)));
+            SuperTurningRightAnimation.Frames[0].FramesxPart.Add(CarPart.BackSeat, new PartFrame(new Rectangle(15, 26, 32, 32), new Rectangle(32, 400, 32, 32)));
+
+            SuperTurningRightAnimation.Frames[1] = new NewCarAnimationFrame();
+            SuperTurningRightAnimation.Frames[1].Duration = 128;
+            SuperTurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 12, 144, 64), new Rectangle(144 * 1, 128, 144, 64)));
+            SuperTurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 40, 144, 32), new Rectangle(0, 320, 144, 32)));
+            SuperTurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 16, 96, 48), new Rectangle(96, 352, 96, 48)));
+            SuperTurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 21, 48, 48), new Rectangle(0, 464, 48, 48)));
+            SuperTurningRightAnimation.Frames[1].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(512, 432, 48, 32)));
+
+            SuperTurningRightAnimation.Frames[2] = new NewCarAnimationFrame();
+            SuperTurningRightAnimation.Frames[3] = new NewCarAnimationFrame();
+
+
+            //Return from Super Right
+            CarAnimation ReturnFromSuperRightAnimation = new CarAnimation();
+            ReturnFromSuperRightAnimation.Frames = new NewCarAnimationFrame[5];
+            ReturnFromSuperRightAnimation.Frames[0] = new NewCarAnimationFrame();
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.Body, new PartFrame(new Rectangle(0, 12, 144, 64), new Rectangle(144 * 1, 128, 144, 64)));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.BodyDown, new PartFrame(new Rectangle(0, 40, 144, 32), new Rectangle(0, 320, 144, 32)));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.BodyBack, new PartFrame(new Rectangle(14, 16, 96, 48), new Rectangle(96, 352, 96, 48)));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.Door, new PartFrame(new Rectangle(46, 21, 48, 48), new Rectangle(0, 464, 48, 48)));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.Motor, new PartFrame(new Rectangle(85, 23, 48, 32), new Rectangle(512, 432, 48, 32)));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel1, new WheelFrame(new Rectangle(9, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel2, new WheelFrame(new Rectangle(89, 54, 32, 32), new Rectangle(0, 432, 32, 32), new Rectangle(32, 432, 32, 32)));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel3, new WheelFrame(new Rectangle(), new Rectangle(), new Rectangle(), false));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.Wheel4, new WheelFrame(new Rectangle(), new Rectangle(), new Rectangle(), false));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.FrontSeat1, new PartFrame(new Rectangle(64, 25, 16, 32), new Rectangle(160, 400, 16, 32)));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.FrontSeat2, new PartFrame(new Rectangle(51, 29, 16, 32), new Rectangle(160, 400, 16, 32)));
+            ReturnFromSuperRightAnimation.Frames[0].FramesxPart.Add(CarPart.BackSeat, new PartFrame(new Rectangle(15, 26, 32, 32), new Rectangle(32, 400, 32, 32)));
+
+            ReturnFromSuperRightAnimation.Frames[1] = new NewCarAnimationFrame();
+            ReturnFromSuperRightAnimation.Frames[2] = new NewCarAnimationFrame();
+            ReturnFromSuperRightAnimation.Frames[3] = new NewCarAnimationFrame();
+            ReturnFromSuperRightAnimation.Frames[4] = new NewCarAnimationFrame();
+
+
             Animations.Add(CarAnimationType.Running, RunningAnimation);
             Animations.Add(CarAnimationType.Running | CarAnimationType.Shine, RunningShineAnimation);
             Animations.Add(CarAnimationType.TurningLeft, TurningLeftAnimation);
             Animations.Add(CarAnimationType.TurningLeft | CarAnimationType.ReturnToRunning, ReturnFromLeft);
             Animations.Add(CarAnimationType.SuperTurningLeft, SuperTurningLeftAnimation);
             Animations.Add(CarAnimationType.SuperTurningLeft | CarAnimationType.ReturnToRunning, ReturnFromSuperLeftAnimation);
+            Animations.Add(CarAnimationType.TurningRight, TurningRightAnimation);
+            Animations.Add(CarAnimationType.TurningRight | CarAnimationType.ReturnToRunning, ReturnFromRight);
+            Animations.Add(CarAnimationType.SuperTurningRight, SuperTurningRightAnimation);
+            Animations.Add(CarAnimationType.SuperTurningRight | CarAnimationType.ReturnToRunning, ReturnFromSuperRightAnimation);
+            //Load();
         }
-
 
         bool playing;
 
@@ -337,6 +532,8 @@ namespace CarGame.Tests
         public Dictionary<CarPart, IPartFrame> PartXSite;
         Dictionary<float, Dictionary<CarPart, IPartFrame>> AnimTimeLine;
         Dictionary<int, TimeLineSegment> AnimTimeLine2;
+
+        private int spriteIndex;
 
         public struct TimeLineSegment
         {
@@ -368,11 +565,18 @@ namespace CarGame.Tests
         bool MPress;
         bool PPress;
         bool OPress;
+        bool IPress;
         bool ZPress;
+        bool APress;
+        bool SPress;
         bool XPress;
         bool Numpad1Press;
         bool Numpad2Press;
         bool Numpad3Press;
+        bool Numpad4Press;
+        bool Numpad5Press;
+        bool F1Press;
+        bool F2Press;
 
         bool modifyAllFrames;
         bool doMovement = true;
@@ -388,6 +592,20 @@ namespace CarGame.Tests
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || ks.IsKeyDown(Keys.Escape))
                 Exit();
 
+            if (ks.IsKeyDown(Keys.F1))
+            {
+                if (!F1Press) Save();
+                F1Press = true;
+            }
+            else F1Press = false;
+
+            if (ks.IsKeyDown(Keys.F2))
+            {
+                if (!F2Press) Load();
+                F2Press = true;
+            }
+            else F2Press = false;
+
             if (doMovement)
             {
                 runBodyMovementElapsed += (float)gameTime.ElapsedGameTime.TotalMilliseconds * speedMod;
@@ -401,8 +619,56 @@ namespace CarGame.Tests
             UpdateZoom(ks);
             UpdateChangePart(ks);
             UpdateChangePosition(ks);
+            UpdateChangeSprite(ks);
             UpdateManualChangeFrame(ks);
+            UpdateChangeFrameSpeed(ks);
             UpdateChangeAnimation(ks);
+
+            if (ks.IsKeyDown(Keys.LeftControl))
+            {
+                if (ks.IsKeyDown(Keys.LeftShift))
+                {
+                    //Frame
+                    if (ks.IsKeyDown(Keys.C))
+                    {
+                        //Copiar
+                        copyFrameData = new Dictionary<CarPart, IPartFrame>(AnimTimeLine2[animationFrame].FramesxPart);
+                    }
+                    else if (ks.IsKeyDown(Keys.V))
+                    {
+                        //Pegar
+                        if (copyFrameData != null)
+                        {
+                            Animations[selectedAnim].Frames[animationFrame].FramesxPart = new Dictionary<CarPart, IPartFrame>(copyFrameData);
+
+                            GenerateTimeLine();
+                            UpdatePartXSite();
+                        }
+                    }
+                }
+                else
+                {
+                    //Part
+                    if (ks.IsKeyDown(Keys.C))
+                    {
+                        //Copiar
+                        copyPartData = new Tuple<CarPart, IPartFrame>(selectedPart, AnimTimeLine2[animationFrame].FramesxPart[selectedPart].Clone());
+                    }
+                    else if (ks.IsKeyDown(Keys.V))
+                    {
+                        //Pegar
+                        if (copyPartData != null)
+                        {
+                            if (Animations[selectedAnim].Frames[animationFrame].FramesxPart.ContainsKey(copyPartData.Item1))
+                                Animations[selectedAnim].Frames[animationFrame].FramesxPart[copyPartData.Item1] = copyPartData.Item2.Clone();
+                            else
+                                Animations[selectedAnim].Frames[animationFrame].FramesxPart.Add(copyPartData.Item1, copyPartData.Item2.Clone());
+                            GenerateTimeLine();
+                            UpdatePartXSite();
+                        }
+                    }
+                }
+            }
 
             if (ks.IsKeyDown(Keys.P))
             {
@@ -425,32 +691,37 @@ namespace CarGame.Tests
             debugInfo += "\nRight: " + pos2.X + " Bottom: " + pos2.Y;
             if (AnimTimeLine2[animationFrame].PartFromIndex[selectedPart] != animationFrame) debugInfo += " (From Index: " + AnimTimeLine2[animationFrame].PartFromIndex[selectedPart] + ")";
             debugInfo += "\nModify mode: " + (modifyAllFrames ? "All Frames" : "Only this Frame");
-            //debugInfo += "\nShowing: " + CurrentAnimation.Frames[animationFrame].FramesxPart[selectedPart].Visible;
+            debugInfo += "\nSpriteIndex: " + spriteIndex;
+            debugInfo += "\nShowing: " + AnimTimeLine2[animationFrame].FramesxPart[selectedPart].Visible;
             debugInfo += "\n-------------";
             debugInfo += "\nAnimation: " + selectedAnim.ToString();
             debugInfo += "\nPlaying General: " + playingGeneral;
             debugInfo += "\nPlaying Wheels: " + playingWheel;
             debugInfo += "\nMovement Enable: " + doMovement;
             debugInfo += "\nFrame Index: " + animationFrame.ToString();
+            debugInfo += "\nFrame Duration: " + Animations[selectedAnim].Frames[animationFrame].Duration.ToString() + " ms.";
             debugInfo += "\nSpeed: x" + speedMod.ToString();
         }
         private void UpdateZoom(KeyboardState ks)
         {
-            if (ks.IsKeyDown(Keys.Add))
+            if (!ks.IsKeyDown(Keys.LeftShift))
             {
-                if (scale < 5 && (ks.IsKeyDown(Keys.Add) && !addPress))
-                    scale++;
-                addPress = true;
-            }
-            else addPress = false;
+                if (ks.IsKeyDown(Keys.Add))
+                {
+                    if (scale < 5 && (ks.IsKeyDown(Keys.Add) && !addPress))
+                        scale++;
+                    addPress = true;
+                }
+                else addPress = false;
 
-            if (ks.IsKeyDown(Keys.Subtract))
-            {
-                if (scale > 1 && (ks.IsKeyDown(Keys.Subtract) && !susPress))
-                    scale--;
-                susPress = true;
+                if (ks.IsKeyDown(Keys.Subtract))
+                {
+                    if (scale > 1 && (ks.IsKeyDown(Keys.Subtract) && !susPress))
+                        scale--;
+                    susPress = true;
+                }
+                else susPress = false;
             }
-            else susPress = false;
         }
         private void UpdateChangePart(KeyboardState ks)
         {
@@ -464,7 +735,7 @@ namespace CarGame.Tests
                         selectedPart = CarPart.BodyDown;
                     else
                         selectedPart = CarPart.Body;
-
+                    UpdateSpriteIndex();
                 }
                 D1Press = true;
             }
@@ -482,6 +753,7 @@ namespace CarGame.Tests
                         selectedPart = CarPart.Wheel4;
                     else
                         selectedPart = CarPart.Wheel1;
+                    UpdateSpriteIndex();
                 }
                 D2Press = true;
             }
@@ -495,6 +767,7 @@ namespace CarGame.Tests
                         selectedPart = CarPart.Motor;
                     else
                         selectedPart = CarPart.Door;
+                    UpdateSpriteIndex();
                 }
                 D3Press = true;
             }
@@ -510,6 +783,7 @@ namespace CarGame.Tests
                         selectedPart = CarPart.FrontSeat2;
                     else
                         selectedPart = CarPart.BackSeat;
+                    UpdateSpriteIndex();
                 }
                 D4Press = true;
             }
@@ -531,6 +805,16 @@ namespace CarGame.Tests
                     {
                         int frame = 3 - animationFrame;
                         SetAnimation(CarAnimationType.SuperTurningLeft | CarAnimationType.ReturnToRunning, frame);
+                    }
+                    else if (selectedAnim == CarAnimationType.TurningRight)
+                    {
+                        int frame = 1 - animationFrame;
+                        SetAnimation(CarAnimationType.TurningRight | CarAnimationType.ReturnToRunning, frame);
+                    }
+                    else if (selectedAnim == CarAnimationType.SuperTurningRight)
+                    {
+                        int frame = 3 - animationFrame;
+                        SetAnimation(CarAnimationType.SuperTurningRight | CarAnimationType.ReturnToRunning, frame);
                     }
                     else if (selectedAnim == CarAnimationType.Running)
                         SetAnimation(CarAnimationType.Running | CarAnimationType.Shine);
@@ -569,6 +853,28 @@ namespace CarGame.Tests
                 Numpad3Press = true;
             }
             else Numpad3Press = false;
+
+            if (ks.IsKeyDown(Keys.NumPad4))
+            {
+                if (!Numpad4Press)
+                {
+                    if (selectedAnim == CarAnimationType.Running)
+                        SetAnimation(CarAnimationType.TurningRight);
+                }
+                Numpad4Press = true;
+            }
+            else Numpad4Press = false;
+
+            if (ks.IsKeyDown(Keys.NumPad5))
+            {
+                if (!Numpad5Press)
+                {
+                    if (selectedAnim == CarAnimationType.Running)
+                        SetAnimation(CarAnimationType.SuperTurningRight);
+                }
+                Numpad5Press = true;
+            }
+            else Numpad5Press = false;
         }
         private void UpdatePlayAnimation(KeyboardState ks)
         {
@@ -602,37 +908,40 @@ namespace CarGame.Tests
             }
             else OPress = false;
 
-            if (ks.IsKeyDown(Keys.Z))
+            if (ks.IsKeyDown(Keys.LeftShift))
             {
-                if (!ZPress)
+                if (ks.IsKeyDown(Keys.Subtract))
                 {
-                    if (speedMod > 0.25f)
+                    if (!susPress)
                     {
-                        if (speedMod == 4f) speedMod = 2f;
-                        else if (speedMod == 2f) speedMod = 1f;
-                        else if (speedMod == 1f) speedMod = 0.5f;
-                        else if (speedMod == 0.5f) speedMod = 0.25f;
+                        if (speedMod > 0.25f)
+                        {
+                            if (speedMod == 4f) speedMod = 2f;
+                            else if (speedMod == 2f) speedMod = 1f;
+                            else if (speedMod == 1f) speedMod = 0.5f;
+                            else if (speedMod == 0.5f) speedMod = 0.25f;
+                        }
                     }
+                    susPress = true;
                 }
-                ZPress = true;
-            }
-            else ZPress = false;
+                else susPress = false;
 
-            if (ks.IsKeyDown(Keys.X))
-            {
-                if (!XPress)
+                if (ks.IsKeyDown(Keys.Add))
                 {
-                    if (speedMod < 4f)
+                    if (!addPress)
                     {
-                        if (speedMod == 0.25f) speedMod = 0.5f;
-                        else if (speedMod == 0.5f) speedMod = 1f;
-                        else if (speedMod == 1f) speedMod = 2f;
-                        else if (speedMod == 2f) speedMod = 4f;
+                        if (speedMod < 4f)
+                        {
+                            if (speedMod == 0.25f) speedMod = 0.5f;
+                            else if (speedMod == 0.5f) speedMod = 1f;
+                            else if (speedMod == 1f) speedMod = 2f;
+                            else if (speedMod == 2f) speedMod = 4f;
+                        }
                     }
+                    addPress = true;
                 }
-                XPress = true;
+                else addPress = false;
             }
-            else XPress = false;
         }
 
         private void UpdateChangePosition(KeyboardState ks)
@@ -744,6 +1053,125 @@ namespace CarGame.Tests
             }
             else rightLastPress = false;
         }
+        private void UpdateChangeSprite(KeyboardState ks)
+        {
+            if (playing) return;
+
+            if (ks.IsKeyDown(Keys.I))
+            {
+                if (!IPress)
+                {
+                    if (AnimTimeLine2[animationFrame].PartFromIndex[selectedPart] != animationFrame)
+                    {
+                        IPartFrame newPartFrame = AnimTimeLine2[animationFrame].FramesxPart[selectedPart].Clone();
+                        Animations[selectedAnim].Frames[animationFrame].FramesxPart.Add(selectedPart, newPartFrame);
+                    }
+                    else Animations[selectedAnim].Frames[animationFrame].FramesxPart.Remove(selectedPart);
+                    GenerateTimeLine();
+                    UpdatePartXSite();
+                }
+                IPress = true;
+            }
+            else IPress = false;
+
+            if (ks.IsKeyDown(Keys.A))
+            {
+                if (!APress)
+                {
+                    if (selectedPart == CarPart.Wheel1 || selectedPart == CarPart.Wheel2 || selectedPart == CarPart.Wheel3 || selectedPart == CarPart.Wheel4)
+                    {
+                        int realFrame = AnimTimeLine2[animationFrame].PartFromIndex[selectedPart];
+                        int sourceIndex1 = Array.FindIndex(SpriteSheetZones[selectedPart], x => x == ((WheelFrame)AnimTimeLine2[animationFrame].FramesxPart[selectedPart]).Source1);
+                        int sourceIndex2 = sourceIndex1 + 1;
+
+                        if (sourceIndex1 - 2 >= 0)
+                        {
+                            sourceIndex1 -= 2;
+                            sourceIndex2 -= 2;
+                        }
+                        else
+                        {
+                            sourceIndex1 = SpriteSheetZones[selectedPart].Length - 2;
+                            sourceIndex2 = SpriteSheetZones[selectedPart].Length - 1;
+                        }
+
+                        WheelFrame wf = (WheelFrame)Animations[selectedAnim].Frames[realFrame].FramesxPart[selectedPart];
+                        wf.Source1 = SpriteSheetZones[selectedPart][sourceIndex1];
+                        wf.Source2 = SpriteSheetZones[selectedPart][sourceIndex2];
+                        Animations[selectedAnim].Frames[realFrame].FramesxPart[selectedPart] = wf;
+                        GenerateTimeLine();
+                        UpdatePartXSite();
+                    }
+                    else
+                    {
+                        int realFrame = AnimTimeLine2[animationFrame].PartFromIndex[selectedPart];
+                        int sourceIndex = Array.FindIndex(SpriteSheetZones[selectedPart], x => x == ((PartFrame)AnimTimeLine2[animationFrame].FramesxPart[selectedPart]).Source);
+
+                        if (sourceIndex - 1 >= 0)
+                            sourceIndex--;
+                        else
+                            sourceIndex = SpriteSheetZones[selectedPart].Length - 1;
+
+                        PartFrame pf = (PartFrame)Animations[selectedAnim].Frames[realFrame].FramesxPart[selectedPart];
+                        pf.Source = SpriteSheetZones[selectedPart][sourceIndex];
+                        Animations[selectedAnim].Frames[realFrame].FramesxPart[selectedPart] = pf;
+                        GenerateTimeLine();
+                        UpdatePartXSite();
+                    }
+                }
+                APress = true;
+            }
+            else APress = false;
+
+            if (ks.IsKeyDown(Keys.S))
+            {
+                if (!SPress)
+                {
+                    if (selectedPart == CarPart.Wheel1 || selectedPart == CarPart.Wheel2 || selectedPart == CarPart.Wheel3 || selectedPart == CarPart.Wheel4)
+                    {
+                        int realFrame = AnimTimeLine2[animationFrame].PartFromIndex[selectedPart];
+                        int sourceIndex1 = spriteIndex;
+                        int sourceIndex2 = sourceIndex1 + 1;
+
+                        if (sourceIndex1 + 2 <= SpriteSheetZones[selectedPart].Length - 1)
+                        {
+                            sourceIndex1 += 2;
+                            sourceIndex2 += 2;
+                        }
+                        else
+                        {
+                            sourceIndex1 = 0;
+                            sourceIndex2 = 1;
+                        }
+
+                        WheelFrame wf = (WheelFrame)Animations[selectedAnim].Frames[realFrame].FramesxPart[selectedPart];
+                        wf.Source1 = SpriteSheetZones[selectedPart][sourceIndex1];
+                        wf.Source2 = SpriteSheetZones[selectedPart][sourceIndex2];
+                        Animations[selectedAnim].Frames[realFrame].FramesxPart[selectedPart] = wf;
+                        GenerateTimeLine();
+                        UpdatePartXSite();
+                    }
+                    else
+                    {
+                        int realFrame = AnimTimeLine2[animationFrame].PartFromIndex[selectedPart];
+                        int sourceIndex = spriteIndex;
+
+                        if (sourceIndex + 1 <= SpriteSheetZones[selectedPart].Length - 1)
+                            sourceIndex++;
+                        else
+                            sourceIndex = 0;
+
+                        PartFrame pf = (PartFrame)Animations[selectedAnim].Frames[realFrame].FramesxPart[selectedPart];
+                        pf.Source = SpriteSheetZones[selectedPart][sourceIndex];
+                        Animations[selectedAnim].Frames[realFrame].FramesxPart[selectedPart] = pf;
+                        GenerateTimeLine();
+                        UpdatePartXSite();
+                    }
+                }
+                SPress = true;
+            }
+            else SPress = false;
+        }
         private void UpdateManualChangeFrame(KeyboardState ks)
         {
             if (playing) return;
@@ -771,6 +1199,38 @@ namespace CarGame.Tests
             }
             else MPress = false;
         }
+        private void UpdateChangeFrameSpeed(KeyboardState ks)
+        {
+            if (playing) return;
+            if (ks.IsKeyDown(Keys.Z))
+            {
+                if (!ZPress)
+                {
+                    int frame = Convert.ToInt32(Animations[selectedAnim].Frames[animationFrame].Duration / 16);
+                    int newFrame = frame - 1;
+                    if (newFrame > 0)
+                        Animations[selectedAnim].Frames[animationFrame].Duration = newFrame * 16;
+                    GenerateTimeLine();
+                    UpdatePartXSite();
+                }
+                ZPress = true;
+            }
+            else ZPress = false;
+
+            if (ks.IsKeyDown(Keys.X))
+            {
+                if (!XPress)
+                {
+                    int frame = Convert.ToInt32(Animations[selectedAnim].Frames[animationFrame].Duration / 16);
+                    int newFrame = frame + 1;
+                    Animations[selectedAnim].Frames[animationFrame].Duration = newFrame * 16;
+                    GenerateTimeLine();
+                    UpdatePartXSite();
+                }
+                XPress = true;
+            }
+            else XPress = false;
+        }
 
         private void SetAnimation(CarAnimationType anim, int frame = 0)
         {
@@ -797,9 +1257,8 @@ namespace CarGame.Tests
                         else
                         {
                             animationFrame = CurrentAnimation.Frames.Length - 1;
-                            if (selectedAnim == (CarAnimationType.TurningLeft | CarAnimationType.ReturnToRunning))
-                                SetAnimation(CarAnimationType.Running);
-                            else if (selectedAnim == (CarAnimationType.SuperTurningLeft | CarAnimationType.ReturnToRunning))
+
+                            if (selectedAnim.HasFlag(CarAnimationType.ReturnToRunning))
                                 SetAnimation(CarAnimationType.Running);
                             else playingGeneral = false;
                         }
@@ -830,7 +1289,7 @@ namespace CarGame.Tests
 
             AnimTimeLine = new Dictionary<float, Dictionary<CarPart, IPartFrame>>();
 
-            int[] vals = (int[])Enum.GetValues(typeof(CarPart));
+            byte[] vals = (byte[])Enum.GetValues(typeof(CarPart));
             for (int i = 0; i < vals.Length; i++)
             {
                 updatedValues.Add((CarPart)vals[i], null);
@@ -876,9 +1335,123 @@ namespace CarGame.Tests
             PartXSite[CarPart.BackSeat] = AnimTimeLine2[animationFrame].FramesxPart[CarPart.BackSeat];
             PartXSite[CarPart.FrontSeat1] = AnimTimeLine2[animationFrame].FramesxPart[CarPart.FrontSeat1];
             PartXSite[CarPart.FrontSeat2] = AnimTimeLine2[animationFrame].FramesxPart[CarPart.FrontSeat2];
+            UpdateSpriteIndex();
+        }
+        private void UpdateSpriteIndex()
+        {
+            if (selectedPart == CarPart.Wheel1 || selectedPart == CarPart.Wheel2 || selectedPart == CarPart.Wheel3 || selectedPart == CarPart.Wheel4)
+                spriteIndex = Array.FindIndex(SpriteSheetZones[selectedPart], x => x == ((WheelFrame)AnimTimeLine2[animationFrame].FramesxPart[selectedPart]).Source1);
+            else
+                spriteIndex = Array.FindIndex(SpriteSheetZones[selectedPart], x => x == ((PartFrame)AnimTimeLine2[animationFrame].FramesxPart[selectedPart]).Source);
         }
 
         private PartFrame GetPartFrame(IPartFrame partFrame) => (PartFrame)partFrame;
+
+
+        private void Save()
+        {
+            CarAnimationType[] carAnimations = Animations.Keys.ToArray();
+            AnimationSerial[] animationsSerial = new AnimationSerial[carAnimations.Length];
+            for (int i = 0; i < carAnimations.Length; i++)
+            {
+                CarAnimationType animation = carAnimations[i];
+                bool loop = Animations[animation].Loop;
+                FrameSerial[] frames = new FrameSerial[Animations[animation].Frames.Length];
+
+                for (int j = 0; j < frames.Length; j++)
+                {
+                    float duration = Animations[animation].Frames[j].Duration;
+                    CarPart[] parts = Animations[animation].Frames[j].FramesxPart.Keys.ToArray();
+                    FramePartSerial[] framePart = new FramePartSerial[parts.Length];
+
+                    for (int k = 0; k < framePart.Length; k++)
+                    {
+                        CarPart part = parts[k];
+                        IPartFrame partFrame = Animations[animation].Frames[j].FramesxPart[part];
+                        IPartFrameSerial partFrameSerial = null;
+
+                        if (partFrame.GetType() == typeof(PartFrame))
+                            partFrameSerial = new PartFrameSerial((PartFrame)partFrame);
+                        else if (partFrame.GetType() == typeof(WheelFrame))
+                            partFrameSerial = new WheelFrameSerial((WheelFrame)partFrame);
+
+                        framePart[k] = new FramePartSerial() { Part = part, Frame = partFrameSerial };
+                    }
+
+                    frames[j] = new FrameSerial() { Duration = Animations[animation].Frames[j].Duration, Frame = framePart };
+                }
+
+                AnimationSerial anim = new AnimationSerial() { Animation = carAnimations[i], Loop = loop, Frames = frames };
+                animationsSerial[i] = anim;
+            }
+
+            XmlSerializer serializer = new XmlSerializer(animationsSerial.GetType());
+            using (var writer = XmlWriter.Create("CarSheets.xml", new XmlWriterSettings { Indent = true }))
+            {
+                serializer.Serialize(writer, animationsSerial);
+            }
+        }
+        private void Load()
+        {
+            AnimationSerial[] animationsSerial = null;
+            XmlSerializer serializer = new XmlSerializer(typeof(AnimationSerial[]));
+            using (var reader = XmlReader.Create("CarSheets.xml"))
+            {
+                animationsSerial = (AnimationSerial[])serializer.Deserialize(reader);
+            }
+
+            Dictionary<CarAnimationType, CarAnimation> animations = new Dictionary<CarAnimationType, CarAnimation>();
+            for (int i = 0; i < animationsSerial.Length; i++)
+            {
+                CarAnimationType animation = animationsSerial[i].Animation;
+                FrameSerial[] framesSerial = animationsSerial[i].Frames;
+
+                NewCarAnimationFrame[] frames = new NewCarAnimationFrame[framesSerial.Length];
+                for (int j = 0; j < framesSerial.Length; j++)
+                {
+                    FrameSerial frame = framesSerial[j];
+                    Dictionary<CarPart, IPartFrame> framesXPart = new Dictionary<CarPart, IPartFrame>();
+                    for (int k = 0; k < frame.Frame.Length; k++)
+                    {
+                        CarPart part = frame.Frame[k].Part;
+                        IPartFrame partFrame = frame.Frame[k].Frame.GetPartFrame();
+
+                        framesXPart.Add(part, partFrame);
+                    }
+
+                    frames[j] = new NewCarAnimationFrame() { Duration = frame.Duration, FramesxPart = framesXPart };
+                }
+
+                CarAnimation animationValue = new CarAnimation() { Loop = animationsSerial[i].Loop, Frames = frames };
+                animations.Add(animation, animationValue);
+            }
+
+            selectedAnim = CarAnimationType.Running;
+
+            animationFrame = 0;
+            animationTime = 0;
+            playing = false;
+            selectedAnim = CarAnimationType.Running;
+            selectedAnim = CarAnimationType.Running;
+            Animations = animations;
+
+            GenerateTimeLine();
+            PartXSite = new Dictionary<CarPart, IPartFrame>();
+            PartXSite.Add(CarPart.Body, null);
+            PartXSite.Add(CarPart.BodyBack, null);
+            PartXSite.Add(CarPart.BodyDown, null);
+            PartXSite.Add(CarPart.Door, null);
+            PartXSite.Add(CarPart.Motor, null);
+            PartXSite.Add(CarPart.Wheel1, null);
+            PartXSite.Add(CarPart.Wheel2, null);
+            PartXSite.Add(CarPart.Wheel3, null);
+            PartXSite.Add(CarPart.Wheel4, null);
+            PartXSite.Add(CarPart.BackSeat, null);
+            PartXSite.Add(CarPart.FrontSeat1, null);
+            PartXSite.Add(CarPart.FrontSeat2, null);
+
+            UpdatePartXSite();
+        }
 
         protected override void Draw(GameTime gameTime)
         {
@@ -1003,6 +1576,7 @@ namespace CarGame.Tests
             GraphicsDevice.Clear(Color.Transparent);
             spriteBatch.Begin();
             spriteBatch.Draw(carRender, new Rectangle(carPos, carRender.Bounds.Size), Color.White);
+            //spriteBatch.Draw(carSpriteSheet, new Rectangle(0, 0, 360, 360), Color.White);
             spriteBatch.End();
             GraphicsDevice.SetRenderTarget(null);
 
@@ -1010,8 +1584,121 @@ namespace CarGame.Tests
             GraphicsDevice.Clear(Color.CornflowerBlue);
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             spriteBatch.Draw(screenRender, new Rectangle(0, 0, graphics.PreferredBackBufferWidth * scale, graphics.PreferredBackBufferHeight * scale), Color.White);
-            spriteBatch.DrawString(font, debugInfo, Vector2.Zero, Color.White);
+            spriteBatch.DrawString(font, debugInfo, new Vector2(-1, -1), Color.Gray);
+            spriteBatch.DrawString(font, debugInfo, new Vector2(-1, 1), Color.Gray);
+            spriteBatch.DrawString(font, debugInfo, new Vector2(1, -1), Color.Gray);
+            spriteBatch.DrawString(font, debugInfo, new Vector2(1, 1), Color.Gray);
+            spriteBatch.DrawString(font, debugInfo, Vector2.Zero, Color.Black);
             spriteBatch.End();
+        }
+    }
+
+    public class AnimationSerial
+    {
+        //public SerialRectangle[] SourceRectangles;
+        public CarAnimationType Animation;
+        public FrameSerial[] Frames;
+        public bool Loop;
+    }
+    public struct FrameSerial
+    {
+        public FramePartSerial[] Frame;
+        public float Duration;
+    }
+    public struct FramePartSerial
+    {
+        public CarPart Part;
+        public IPartFrameSerial Frame;
+    }
+    public struct SerialRectangle
+    {
+        public int X;
+        public int Y;
+        public int Width;
+        public int Height;
+        public Rectangle GetRectangle() => new Rectangle(X, Y, Width, Height);
+        public SerialRectangle()
+        {
+            X = 0;
+            Y = 0;
+            Width = 0;
+            Height = 0;
+        }
+        public SerialRectangle(int x, int y, int width, int height)
+        {
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
+        }
+        public SerialRectangle(Rectangle rectangle)
+        {
+            X = rectangle.X;
+            Y = rectangle.Y;
+            Width = rectangle.Width;
+            Height = rectangle.Height;
+        }
+    }
+    [XmlInclude(typeof(PartFrameSerial)), XmlInclude(typeof(WheelFrameSerial))]
+    public class IPartFrameSerial
+    {
+        public SerialRectangle Rectangle { get; set; }
+        public bool Visible { get; set; }
+        public bool ApplyCarMovement { get; set; }
+
+        public virtual IPartFrame GetPartFrame() => null;
+    }
+    public class PartFrameSerial : IPartFrameSerial
+    {
+        //public int Source { get; set; }
+        public SerialRectangle Source { get; set; }
+
+        public PartFrameSerial()
+        {
+            Rectangle = new SerialRectangle();
+            Source = new SerialRectangle();
+            ApplyCarMovement = true;
+            Visible = true;
+        }
+        public PartFrameSerial(PartFrame partFrame)
+        {
+            Rectangle = new SerialRectangle(partFrame.Rectangle);
+            Source = new SerialRectangle(partFrame.Source);
+            ApplyCarMovement = partFrame.ApplyCarMovement;
+            Visible = partFrame.Visible;
+        }
+        public override IPartFrame GetPartFrame()
+        {
+            return new PartFrame() { ApplyCarMovement = ApplyCarMovement, Rectangle = Rectangle.GetRectangle(), Source = Source.GetRectangle(), Visible = Visible };
+        }
+    }
+    public class WheelFrameSerial : IPartFrameSerial
+    {
+        //public int Source1 { get; set; }
+        //public int Source2 { get; set; }
+        public SerialRectangle Source1 { get; set; }
+        public SerialRectangle Source2 { get; set; }
+
+        public WheelFrameSerial()
+        {
+            Rectangle = new SerialRectangle();
+            Source1 = new SerialRectangle();
+            Source2 = new SerialRectangle();
+            ApplyCarMovement = true;
+            Visible = true;
+        }
+        public WheelFrameSerial(WheelFrame partFrame)
+        {
+            Rectangle = new SerialRectangle(partFrame.Rectangle);
+            Source1 = new SerialRectangle(partFrame.Source1);
+            Source2 = new SerialRectangle(partFrame.Source2);
+            ApplyCarMovement = partFrame.ApplyCarMovement;
+            Visible = partFrame.Visible;
+        }
+
+        public override IPartFrame GetPartFrame()
+        {
+            return new WheelFrame() { ApplyCarMovement = ApplyCarMovement, Rectangle = Rectangle.GetRectangle(), Source1 = Source1.GetRectangle(), Source2 = Source2.GetRectangle(), Visible = Visible };
         }
     }
 }

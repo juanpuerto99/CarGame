@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace CarGame
 {
     [Flags()]
-    public enum CarAnimationType
+    public enum CarAnimationType : Int32
     {
         Running = 1,
         TurningLeft = 2,
@@ -19,7 +20,7 @@ namespace CarGame
         //Crashing
         Shine = 64,
     }
-    public enum CarPart
+    public enum CarPart : byte
     {
         Body,
         BodyBack,
@@ -52,6 +53,7 @@ namespace CarGame
             Duration = 0f;
             FramesxPart = new Dictionary<CarPart, IPartFrame>();
         }
+        public NewCarAnimationFrame Clone() => (NewCarAnimationFrame)this.MemberwiseClone();
     }
 
     public interface IPartFrame
@@ -59,6 +61,8 @@ namespace CarGame
         public Rectangle Rectangle { get; set; }
         public bool Visible { get; set; }
         public bool ApplyCarMovement { get; set; }
+
+        public IPartFrame Clone();
     }
     public struct PartFrame : IPartFrame
     {
@@ -67,6 +71,13 @@ namespace CarGame
         public bool Visible { get; set; }
         public bool ApplyCarMovement { get; set; }
 
+        public PartFrame()
+        {
+            Rectangle = Rectangle.Empty;
+            Source = Rectangle.Empty;
+            Visible = false;
+            ApplyCarMovement = false;
+        }
         public PartFrame(Rectangle pos, Rectangle source)
         {
             Rectangle = pos;
@@ -81,15 +92,26 @@ namespace CarGame
             Visible = visible;
             ApplyCarMovement = true;
         }
+
+        public IPartFrame Clone() => this.MemberwiseClone() as IPartFrame;
+
     }
     public struct WheelFrame : IPartFrame
     {
         public Rectangle Rectangle { get; set; }
-        public Rectangle Source1;
-        public Rectangle Source2;
+        public Rectangle Source1 { get; set; }
+        public Rectangle Source2 { get; set; }
         public bool Visible { get; set; }
         public bool ApplyCarMovement { get; set; }
 
+        public WheelFrame()
+        {
+            Rectangle = Rectangle.Empty;
+            Source1 = Rectangle.Empty;
+            Source2 = Rectangle.Empty;
+            Visible = false;
+            ApplyCarMovement = false;
+        }
         public WheelFrame(Rectangle pos, Rectangle source1, Rectangle source2)
         {
             Rectangle = pos;
@@ -114,6 +136,8 @@ namespace CarGame
             ApplyCarMovement = applyCarMovement;
             Visible = true;
         }
+
+        public IPartFrame Clone() => this.MemberwiseClone() as IPartFrame;
     }
 
 
