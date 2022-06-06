@@ -14,12 +14,20 @@ namespace CarGame.Scenary.Desert
     public class Desert : Scenary
     {
         bool parallax1, parallax2, parallax3;
-        TimeSpan cactusDelay;
-        TimeSpan tumbleWeedDelay;
-        TimeSpan nextTumbleWeedDelay;
 
         DesertStorm desertStorm;
         Random random = new Random();
+
+        Dictionary<BiomeType, List<Segment>> Segments = new Dictionary<BiomeType, List<Segment>>();
+        private enum BiomeType : byte
+        {
+            Desert = 0,
+            AncientRuins = 1
+        }
+        private BiomeType biome;
+        private BiomeType parralaxCurrentBiome;
+        private int distanceOnBiome;
+        private int maxDistanceOnBiome;
 
         public override void LoadContent(ContentManager Content)
         {
@@ -65,7 +73,6 @@ namespace CarGame.Scenary.Desert
 
             LoadSegments();
 
-            nextTumbleWeedDelay = TimeSpan.FromSeconds(random.Next(5, 15));
             maxDistanceOnBiome = 1;
         }
         public void LoadSegments()
@@ -155,7 +162,7 @@ namespace CarGame.Scenary.Desert
                 }
                 else if (biome == BiomeType.AncientRuins)
                 {
-                    Texture2D t = CreateRuinsFloor(distanceOnBiome == 0, false);
+                    Texture2D t = CreateRuinsFloor(distanceOnBiome == 0, distanceOnBiome == maxDistanceOnBiome);
                     Terrain tn = new Terrain(t, Terrain.eTerrainType.Ground, right, 360 - 224 - 160);
                     tn.Speed = General.Speed;
                     Terrains[Terrain.eTerrainType.Ground].Add(tn);
@@ -392,13 +399,13 @@ namespace CarGame.Scenary.Desert
             }
 
             desertStorm.Update();
-            distanceOnBiome += General.Speed;
         }
 
         private void CheckNextBiome(float right)
         {
             if (right < 640)
             {
+                distanceOnBiome++;
                 if (distanceOnBiome > maxDistanceOnBiome)
                 {
                     //Change biome
@@ -421,96 +428,39 @@ namespace CarGame.Scenary.Desert
                     switch (biome)
                     {
                         case BiomeType.Desert:
-                            maxDistanceOnBiome = 5000;
+                            maxDistanceOnBiome = 5;
                             break;
                         case BiomeType.AncientRuins:
-                            maxDistanceOnBiome = 3000;
+                            maxDistanceOnBiome = 3;
                             break;
                     }
                 }
             }
         }
-
-        Dictionary<BiomeType, List<Segment>> Segments = new Dictionary<BiomeType, List<Segment>>();
-        private enum BiomeType : byte
-        {
-            Desert = 0,
-            AncientRuins = 1
-        }
-        private BiomeType biome;
-        private BiomeType parralaxCurrentBiome;
-        private float distanceOnBiome;
-        private int maxDistanceOnBiome;
-        private void CactusUpdate(GameTime gameTime)
-        {
-            cactusDelay += gameTime.ElapsedGameTime;
-
-            if (cactusDelay.TotalSeconds > 2)
-            {
-                cactusDelay = new TimeSpan();
-
-
-
-                int textureIndex = random.Next(0, 6);
-                //Texture2D texture = null;
-                //if (textureIndex == 0)
-                //    texture = General.TerrainSpriteSheet.GetTexture(new Rectangle(0, 1056, 48, 96));
-                //else if (textureIndex == 1)
-                //    texture = General.TerrainSpriteSheet.GetTexture(new Rectangle(48, 1056, 48, 96));
-                //else if (textureIndex == 2)
-                //    texture = General.TerrainSpriteSheet.GetTexture(new Rectangle(96, 1056, 64, 96));
-                //else if (textureIndex == 3)
-                //    texture = General.TerrainSpriteSheet.GetTexture(new Rectangle(160, 1056, 64, 96));
-                //else if (textureIndex == 4)
-                //    texture = General.TerrainSpriteSheet.GetTexture(new Rectangle(224, 1056, 64, 96));
-                //else if (textureIndex == 5)
-                //    texture = General.TerrainSpriteSheet.GetTexture(new Rectangle(288, 1056, 64, 96));
-
-                Vector2 pos = new Vector2(640 + 50, random.Next(214 + 20, 360));
-                Cactus cactus = new Cactus(General.TerrainSpriteSheet, pos, textureIndex);
-
-                Obstacles.Add(cactus);
-            }
-        }
-        private void TubleWeedUpdate(GameTime gameTime)
-        {
-            tumbleWeedDelay += gameTime.ElapsedGameTime;
-
-            if (tumbleWeedDelay > nextTumbleWeedDelay)
-            {
-                tumbleWeedDelay = new TimeSpan();
-                nextTumbleWeedDelay = TimeSpan.FromSeconds(random.Next(2, 5));
-
-                Vector2 pos = new Vector2(640 + 50, random.Next(214 + 20, 350));
-                TumbleWeed tumbleWeed = new TumbleWeed(pos);
-                tumbleWeed.Direction = Convert.ToBoolean(random.Next(0, 1));
-                Obstacles.Add(tumbleWeed);
-            }
-        }
-
-        int[,] slabs;
         private Texture2D CreateRuinsFloor(bool start, bool finish) //out Point[] positions
         {
-            int finishX = finish ? 1280 - 5 : 1280 - 5 + 43;
+            int finishX = finish ? 1280 - 40 : 1280;
+            int startX = start ? 0 : -40;
 
             RenderTarget2D floor = new RenderTarget2D(General.GraphicsDevice, 1280, 370);//224
             General.GraphicsDevice.SetRenderTarget(floor);
             General.GraphicsDevice.Clear(Color.Transparent);
             General.SpriteBatch.Begin();
-            if (start) General.SpriteBatch.Draw(General.TerrainSpriteSheet, new Rectangle(0, 120, 192, 224), new Rectangle(0, 424, 192, 224), Color.White); //464
+            if (start) General.SpriteBatch.Draw(General.TerrainSpriteSheet, new Rectangle(0, 160, 192, 224), new Rectangle(0, 464, 192, 224), Color.White); //464
+            if (finish) General.SpriteBatch.Draw(General.TerrainSpriteSheet, new Rectangle(1280 - 192, 160, 192, 224), new Rectangle(1280 - 192, 464, 192, 224), Color.White); //464
             for (int y = 380 - 21; y > 370 - 165 - 21; y -= 21)
             {
                 int acumX = 0;
-                for (int x = 5; x < finishX; x += 42) //*15
+                for (int x = startX; x < finishX; x += 40) //*15
                 {
                     Rectangle source;
-                    int slabIndex = random.Next(0, 10);
+                    int slabIndex = random.Next(0, 20);
 
-                    if (slabIndex < 6) source = new Rectangle(64, 1376, 64, 32);
-                    else if (slabIndex < 7) source = new Rectangle(128, 1376, 64, 32);
-                    else if (slabIndex < 8) source = new Rectangle(192, 1376, 64, 32);
-                    else if (slabIndex < 9) source = new Rectangle(64, 1408, 64, 32);
-                    else if (slabIndex < 10) source = new Rectangle(128, 1408, 64, 32);
+                    if (slabIndex < 14) source = new Rectangle(64, 1376, 64, 32);
+                    else if (slabIndex < 15) source = new Rectangle(128, 1376, 64, 32);
+                    else if (slabIndex < 16) source = new Rectangle(192, 1376, 64, 32);
+                    else if (slabIndex < 17) source = new Rectangle(64, 1408, 64, 32);
+                    else if (slabIndex < 18) source = new Rectangle(128, 1408, 64, 32);
                     else source = new Rectangle(192, 1408, 64, 32);
 
                     General.SpriteBatch.Draw(General.TerrainSpriteSheet, new Rectangle(x, y, 64, 32), source, Color.White);
@@ -518,8 +468,15 @@ namespace CarGame.Scenary.Desert
                 }
             }
 
-            for (int x = start ? 0 : -352 / 2; x < 1280; x += 256)
-                General.SpriteBatch.Draw(General.TerrainSpriteSheet, new Rectangle(x, 0, 352, 224), new Rectangle(0, 1152, 352, 224), Color.White);
+            for (int x = 0; x < 1280; x += 256)
+            {
+                if (start && x == 0)
+                    General.SpriteBatch.Draw(General.TerrainSpriteSheet, new Rectangle(x, 0, 272, 224), new Rectangle(1152 + 272 * 0, 1152, 272, 224), Color.White);
+                else if (finish && x == 1024)
+                    General.SpriteBatch.Draw(General.TerrainSpriteSheet, new Rectangle(x, 0, 272, 224), new Rectangle(1152 + 272 * 2, 1152, 272, 224), Color.White);
+                else
+                    General.SpriteBatch.Draw(General.TerrainSpriteSheet, new Rectangle(x, 0, 272, 224), new Rectangle(1152 + 272 * 1, 1152, 272, 224), Color.White);
+            }
 
 
             General.SpriteBatch.End();

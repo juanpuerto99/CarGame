@@ -87,19 +87,24 @@ namespace CarGame.Tests
 
             base.LoadContent();
         }
+        
         private void CreateSpriteSheets()
         {
             SpriteSheetZones = new Dictionary<CarPart, Rectangle[]>();
             int count = 0;
 
             //Body
-            SpriteSheetZones.Add(CarPart.Body, new Rectangle[14]);
+            SpriteSheetZones.Add(CarPart.Body, new Rectangle[22]);
             count = 0;
             for (int i = 0; i < 6; i++) SpriteSheetZones[CarPart.Body][count + i] = new Rectangle(144 * i, 64 * 0, 144, 64);
             count += 6;
             for (int i = 0; i < 4; i++) SpriteSheetZones[CarPart.Body][count + i] = new Rectangle(144 * i, 64 * 1, 144, 64);
             count += 4;
             for (int i = 0; i < 4; i++) SpriteSheetZones[CarPart.Body][count + i] = new Rectangle(144 * i, 64 * 2, 144, 64);
+            count += 4;
+            for (int i = 0; i < 4; i++) SpriteSheetZones[CarPart.Body][count + i] = new Rectangle(144 * i, 64 * 3, 144, 64);
+            count += 4;
+            for (int i = 0; i < 4; i++) SpriteSheetZones[CarPart.Body][count + i] = new Rectangle(144 * i, 64 * 4, 144, 64);
             count += 4;
 
             //Body Down
@@ -109,10 +114,10 @@ namespace CarGame.Tests
             count += 3;
 
             //Body Back
-            SpriteSheetZones.Add(CarPart.BodyBack, new Rectangle[4]);
+            SpriteSheetZones.Add(CarPart.BodyBack, new Rectangle[9]);
             count = 0;
-            for (int i = 0; i < 4; i++) SpriteSheetZones[CarPart.BodyBack][count + i] = new Rectangle(96 * i, 352, 96, 48);
-            count += 4;
+            for (int i = 0; i < 9; i++) SpriteSheetZones[CarPart.BodyBack][count + i] = new Rectangle(96 * i, 352, 96, 48);
+            count += 9;
 
             //BackSeat
             SpriteSheetZones.Add(CarPart.BackSeat, new Rectangle[5]);
@@ -147,13 +152,13 @@ namespace CarGame.Tests
             count += 8;
 
             //Door
-            SpriteSheetZones.Add(CarPart.Door, new Rectangle[3]);
+            SpriteSheetZones.Add(CarPart.Door, new Rectangle[7]);
             count = 0;
-            for (int i = 0; i < 3; i++) SpriteSheetZones[CarPart.Door][count + i] = new Rectangle(48 * i, 464, 48, 48);
-            count += 3;
+            for (int i = 0; i < 7; i++) SpriteSheetZones[CarPart.Door][count + i] = new Rectangle(48 * i, 464, 48, 48);
+            count += 7;
 
             //Capo / Motor
-            SpriteSheetZones.Add(CarPart.Motor, new Rectangle[12]);
+            SpriteSheetZones.Add(CarPart.Motor, new Rectangle[16]);
             count = 0;
             for (int i = 0; i < 6; i++) SpriteSheetZones[CarPart.Motor][count + i] = new Rectangle(464 + 48 * i, 400, 48, 32);
             count += 6;
@@ -161,6 +166,10 @@ namespace CarGame.Tests
             count += 3;
             for (int i = 0; i < 3; i++) SpriteSheetZones[CarPart.Motor][count + i] = new Rectangle(464 + 48 * i, 464, 48, 32);
             count += 3;
+            for (int i = 0; i < 2; i++) SpriteSheetZones[CarPart.Motor][count + i] = new Rectangle(464 + 48 * i, 464 + 32, 48, 32);
+            count += 2;
+            for (int i = 0; i < 2; i++) SpriteSheetZones[CarPart.Motor][count + i] = new Rectangle(464 + 48 * i, 464 + 64, 48, 32);
+            count += 2;
         }
         private void CreateAnimations()
         {
@@ -513,7 +522,12 @@ namespace CarGame.Tests
             Animations.Add(CarAnimationType.TurningRight | CarAnimationType.ReturnToRunning, ReturnFromRight);
             Animations.Add(CarAnimationType.SuperTurningRight, SuperTurningRightAnimation);
             Animations.Add(CarAnimationType.SuperTurningRight | CarAnimationType.ReturnToRunning, ReturnFromSuperRightAnimation);
-            //Load();
+            Animations.Add(CarAnimationType.TurningFront, RunningAnimation);
+            Animations.Add(CarAnimationType.TurningBack, RunningAnimation);
+            Animations.Add(CarAnimationType.TurningBack | CarAnimationType.ReturnToRunning, RunningAnimation);
+            Animations.Add(CarAnimationType.SuperTurningBack, RunningAnimation);
+            Animations.Add(CarAnimationType.SuperTurningBack | CarAnimationType.ReturnToRunning, RunningAnimation);
+            Load();
         }
 
         bool playing;
@@ -570,11 +584,14 @@ namespace CarGame.Tests
         bool APress;
         bool SPress;
         bool XPress;
+        bool VPress;
         bool Numpad1Press;
         bool Numpad2Press;
         bool Numpad3Press;
         bool Numpad4Press;
         bool Numpad5Press;
+        bool Numpad6Press;
+        bool Numpad7Press;
         bool F1Press;
         bool F2Press;
 
@@ -623,52 +640,63 @@ namespace CarGame.Tests
             UpdateManualChangeFrame(ks);
             UpdateChangeFrameSpeed(ks);
             UpdateChangeAnimation(ks);
+            UpdateCopyAndPaste(ks);
 
-            if (ks.IsKeyDown(Keys.LeftControl))
+            if (ks.IsKeyDown(Keys.LeftAlt))
             {
-                if (ks.IsKeyDown(Keys.LeftShift))
+                if (ks.IsKeyDown(Keys.Add))
                 {
-                    //Frame
-                    if (ks.IsKeyDown(Keys.C))
+                    if (!addPress)
                     {
-                        //Copiar
-                        copyFrameData = new Dictionary<CarPart, IPartFrame>(AnimTimeLine2[animationFrame].FramesxPart);
-                    }
-                    else if (ks.IsKeyDown(Keys.V))
-                    {
-                        //Pegar
-                        if (copyFrameData != null)
-                        {
-                            Animations[selectedAnim].Frames[animationFrame].FramesxPart = new Dictionary<CarPart, IPartFrame>(copyFrameData);
+                        //Insert Frame
+                        List<NewCarAnimationFrame> frames = Animations[selectedAnim].Frames.ToList();
+                        if (animationFrame == Animations[selectedAnim].Frames.Length - 1)
+                            frames.Add(new NewCarAnimationFrame() { Duration = 16, FramesxPart = new Dictionary<CarPart, IPartFrame>() });
+                        else
+                            frames.Insert(animationFrame + 1, new NewCarAnimationFrame() { Duration = 16, FramesxPart = new Dictionary<CarPart, IPartFrame>() });
 
-                            GenerateTimeLine();
-                            UpdatePartXSite();
-                        }
+                        animationFrame++;
+                        Animations[selectedAnim].Frames = frames.ToArray();
+                        GenerateTimeLine();
+                        UpdatePartXSite();
                     }
+                    addPress = true;
                 }
-                else
+                else addPress = false;
+
+                if (ks.IsKeyDown(Keys.Subtract))
                 {
-                    //Part
-                    if (ks.IsKeyDown(Keys.C))
+                    if (!susPress)
                     {
-                        //Copiar
-                        copyPartData = new Tuple<CarPart, IPartFrame>(selectedPart, AnimTimeLine2[animationFrame].FramesxPart[selectedPart].Clone());
+                        //Remove Frame
+                        List<NewCarAnimationFrame> frames = Animations[selectedAnim].Frames.ToList();
+
+                        if (Animations[selectedAnim].Frames.Length > 1 && animationFrame > 0)
+                            frames.RemoveAt(animationFrame);
+
+                        Animations[selectedAnim].Frames = frames.ToArray();
+                        if (animationFrame > Animations[selectedAnim].Frames.Length - 1)
+                            animationFrame--;
+                        GenerateTimeLine();
+                        UpdatePartXSite();
                     }
-                    else if (ks.IsKeyDown(Keys.V))
-                    {
-                        //Pegar
-                        if (copyPartData != null)
-                        {
-                            if (Animations[selectedAnim].Frames[animationFrame].FramesxPart.ContainsKey(copyPartData.Item1))
-                                Animations[selectedAnim].Frames[animationFrame].FramesxPart[copyPartData.Item1] = copyPartData.Item2.Clone();
-                            else
-                                Animations[selectedAnim].Frames[animationFrame].FramesxPart.Add(copyPartData.Item1, copyPartData.Item2.Clone());
-                            GenerateTimeLine();
-                            UpdatePartXSite();
-                        }
-                    }
+                    susPress = true;
                 }
+                else susPress = false;
             }
+
+            if (ks.IsKeyDown(Keys.V))
+            {
+                if (!VPress)
+                {
+                    Animations[selectedAnim].Frames[animationFrame].FramesxPart[selectedPart].Visible = !Animations[selectedAnim].Frames[animationFrame].FramesxPart[selectedPart].Visible;
+                }
+                VPress = true;
+            }
+            else VPress = false;
+
+            if (ks.IsKeyDown(Keys.Divide)) Window.Title = "Mambru se fue a la guerra";
+            else Window.Title = "CarGame";
 
             if (ks.IsKeyDown(Keys.P))
             {
@@ -704,7 +732,7 @@ namespace CarGame.Tests
         }
         private void UpdateZoom(KeyboardState ks)
         {
-            if (!ks.IsKeyDown(Keys.LeftShift))
+            if (!ks.IsKeyDown(Keys.LeftShift) && !ks.IsKeyDown(Keys.LeftAlt))
             {
                 if (ks.IsKeyDown(Keys.Add))
                 {
@@ -816,6 +844,26 @@ namespace CarGame.Tests
                         int frame = 3 - animationFrame;
                         SetAnimation(CarAnimationType.SuperTurningRight | CarAnimationType.ReturnToRunning, frame);
                     }
+                    else if (selectedAnim == CarAnimationType.TurningFront)
+                    {
+                        int frame = 1 - animationFrame;
+                        SetAnimation(CarAnimationType.TurningFront| CarAnimationType.ReturnToRunning, frame);
+                    }
+                    else if (selectedAnim == CarAnimationType.SuperTurningFront)
+                    {
+                        int frame = 3 - animationFrame;
+                        SetAnimation(CarAnimationType.SuperTurningFront | CarAnimationType.ReturnToRunning, frame);
+                    }
+                    else if (selectedAnim == CarAnimationType.TurningBack)
+                    {
+                        int frame = 1 - animationFrame;
+                        SetAnimation(CarAnimationType.TurningBack | CarAnimationType.ReturnToRunning, frame);
+                    }
+                    else if (selectedAnim == CarAnimationType.SuperTurningBack)
+                    {
+                        int frame = 3 - animationFrame;
+                        SetAnimation(CarAnimationType.SuperTurningBack | CarAnimationType.ReturnToRunning, frame);
+                    }
                     else if (selectedAnim == CarAnimationType.Running)
                         SetAnimation(CarAnimationType.Running | CarAnimationType.Shine);
                     else
@@ -829,12 +877,13 @@ namespace CarGame.Tests
             {
                 if (!Numpad2Press)
                 {
-                    if (selectedAnim == CarAnimationType.TurningLeft)
-                        SetAnimation(CarAnimationType.SuperTurningLeft, animationFrame);
-                    //else if (selectedAnim == CarAnimationType.TurningLeft)
-                        //SetAnimation(CarAnimationType.TurningLeft | CarAnimationType.Shine, false);
-                    else
-                        SetAnimation(CarAnimationType.TurningLeft);
+                    if (selectedAnim == CarAnimationType.Running)
+                    {
+                        if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
+                            SetAnimation(CarAnimationType.SuperTurningLeft);
+                        else
+                            SetAnimation(CarAnimationType.TurningLeft);
+                    }
                 }
                 Numpad2Press = true;
             }
@@ -844,11 +893,13 @@ namespace CarGame.Tests
             {
                 if (!Numpad3Press)
                 {
-                    CarAnimationType? newAnim = null;
                     if (selectedAnim == CarAnimationType.Running)
-                        newAnim = CarAnimationType.SuperTurningLeft;
-
-                    if (newAnim.HasValue) SetAnimation(newAnim.Value);
+                    {
+                        if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
+                            SetAnimation(CarAnimationType.SuperTurningRight);
+                        else
+                            SetAnimation(CarAnimationType.TurningRight);
+                    }
                 }
                 Numpad3Press = true;
             }
@@ -859,7 +910,12 @@ namespace CarGame.Tests
                 if (!Numpad4Press)
                 {
                     if (selectedAnim == CarAnimationType.Running)
-                        SetAnimation(CarAnimationType.TurningRight);
+                    {
+                        if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
+                            SetAnimation(CarAnimationType.SuperTurningFront);
+                        else
+                            SetAnimation(CarAnimationType.TurningFront);
+                    }
                 }
                 Numpad4Press = true;
             }
@@ -870,11 +926,34 @@ namespace CarGame.Tests
                 if (!Numpad5Press)
                 {
                     if (selectedAnim == CarAnimationType.Running)
-                        SetAnimation(CarAnimationType.SuperTurningRight);
+                    {
+                        if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
+                            SetAnimation(CarAnimationType.SuperTurningBack);
+                        else
+                            SetAnimation(CarAnimationType.TurningBack);
+                    }
                 }
                 Numpad5Press = true;
             }
             else Numpad5Press = false;
+
+            if (ks.IsKeyDown(Keys.NumPad6))
+            {
+                if (!Numpad6Press)
+                {
+                }
+                Numpad6Press = true;
+            }
+            else Numpad6Press = false;
+
+            if (ks.IsKeyDown(Keys.NumPad7))
+            {
+                if (!Numpad7Press)
+                {
+                }
+                Numpad7Press = true;
+            }
+            else Numpad7Press = false;
         }
         private void UpdatePlayAnimation(KeyboardState ks)
         {
@@ -908,7 +987,7 @@ namespace CarGame.Tests
             }
             else OPress = false;
 
-            if (ks.IsKeyDown(Keys.LeftShift))
+            if (ks.IsKeyDown(Keys.LeftShift) && !ks.IsKeyDown(Keys.LeftAlt))
             {
                 if (ks.IsKeyDown(Keys.Subtract))
                 {
@@ -1230,6 +1309,55 @@ namespace CarGame.Tests
                 XPress = true;
             }
             else XPress = false;
+        }
+
+        private void UpdateCopyAndPaste(KeyboardState ks)
+        {
+            if (ks.IsKeyDown(Keys.LeftControl))
+            {
+                if (ks.IsKeyDown(Keys.LeftShift))
+                {
+                    //Frame
+                    if (ks.IsKeyDown(Keys.C))
+                    {
+                        //Copiar
+                        copyFrameData = new Dictionary<CarPart, IPartFrame>(AnimTimeLine2[animationFrame].FramesxPart);
+                    }
+                    else if (ks.IsKeyDown(Keys.V))
+                    {
+                        //Pegar
+                        if (copyFrameData != null)
+                        {
+                            Animations[selectedAnim].Frames[animationFrame].FramesxPart = new Dictionary<CarPart, IPartFrame>(copyFrameData);
+
+                            GenerateTimeLine();
+                            UpdatePartXSite();
+                        }
+                    }
+                }
+                else
+                {
+                    //Part
+                    if (ks.IsKeyDown(Keys.C))
+                    {
+                        //Copiar
+                        copyPartData = new Tuple<CarPart, IPartFrame>(selectedPart, AnimTimeLine2[animationFrame].FramesxPart[selectedPart].Clone());
+                    }
+                    else if (ks.IsKeyDown(Keys.V))
+                    {
+                        //Pegar
+                        if (copyPartData != null)
+                        {
+                            if (Animations[selectedAnim].Frames[animationFrame].FramesxPart.ContainsKey(copyPartData.Item1))
+                                Animations[selectedAnim].Frames[animationFrame].FramesxPart[copyPartData.Item1] = copyPartData.Item2.Clone();
+                            else
+                                Animations[selectedAnim].Frames[animationFrame].FramesxPart.Add(copyPartData.Item1, copyPartData.Item2.Clone());
+                            GenerateTimeLine();
+                            UpdatePartXSite();
+                        }
+                    }
+                }
+            }
         }
 
         private void SetAnimation(CarAnimationType anim, int frame = 0)

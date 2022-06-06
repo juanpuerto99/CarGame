@@ -20,6 +20,48 @@
 /processorParam:TextureFormat=Compressed
 /build:Fonts/Arial12.spritefont
 
+#begin Sounds/Motor/Ignition.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Motor/Ignition.wav
+
+#begin Sounds/Motor/RPM-1070.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Motor/RPM-1070.wav
+
+#begin Sounds/Motor/RPM-1529.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Motor/RPM-1529.wav
+
+#begin Sounds/Motor/RPM-2328.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Motor/RPM-2328.wav
+
+#begin Sounds/Motor/RPM-3002.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Motor/RPM-3002.wav
+
+#begin Sounds/Motor/RPM-4497.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Motor/RPM-4497.wav
+
+#begin Sounds/Motor/RPM-5031.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/Motor/RPM-5031.wav
+
 #begin Terrain/Desert.png
 /importer:TextureImporter
 /processor:TextureProcessor

@@ -8,6 +8,30 @@ using System.Xml.Serialization;
 
 namespace CarGame
 {
+    public class Car : Entity
+    {
+        private Dictionary<CarAnimationType, CarAnimation> Animations;
+        private Dictionary<CarPart, IPartFrame> PartXSite;
+        private CarAnimationType currentAnimation = CarAnimationType.Running;
+        //private Dictionary<int, TimeLineSegment> AnimTimeLine2;
+
+        private int animationFrame;
+        private int currentWheelSource;
+        private float animationTime;
+        private float wheelTime;
+
+        public override void Update(GameTime gameTime)
+        {
+            for (int i = 0; i < General.Obstacles.Count; i++)
+            {
+                if (HitBox.CheckCollision(General.Obstacles[i].HitBox))
+                {
+                    //General.Obstacles[i].CarCrashed();
+                }
+            }
+        }
+    }
+
     [Flags()]
     public enum CarAnimationType : Int32
     {
@@ -17,8 +41,34 @@ namespace CarGame
         TurningRight = 8,
         SuperTurningRight = 16,
         ReturnToRunning = 32,
+        TurningFront = 64,
+        SuperTurningFront = 128,
+        TurningBack = 256,
+        SuperTurningBack = 512,
+
+        //RunningRight = 512,
+        //TurningRight = 8,
+        //SuperTurningRight = 16,
+        //SuperRunningRight = 512,
+
+        //RunningLeft = 512,
+        //TurningLeft = 2,
+        //SuperTurningLeft = 4,
+        //SuperRunningLeft = 512,
+
+        //RunningFront = 512,
+        //TurningFront = 64,
+        //SuperTurningFront = 128,
+        //SuperRuningFront = 512,
+
+        //TurningBack = 256,
+        //RuningBack = 512,
+        //SuperTurningBack = 512,
+        //SuperRuningBack = 512,
+
+
         //Crashing
-        Shine = 64,
+        Shine = 1024,
     }
     public enum CarPart : byte
     {
@@ -138,29 +188,5 @@ namespace CarGame
         }
 
         public IPartFrame Clone() => this.MemberwiseClone() as IPartFrame;
-    }
-
-
-    public class Car : Entity
-    {
-        private Dictionary<CarAnimationType, CarAnimation> Animations;
-        private Dictionary<CarPart, IPartFrame> PartXSite;
-        private CarAnimationType currentAnimation = CarAnimationType.Running;
-
-        private int animationFrame;
-        private int currentWheelSource;
-        private float animationTime;
-        private float wheelTime;
-
-        public override void Update(GameTime gameTime)
-        {
-            for (int i = 0; i < General.Obstacles.Count; i++)
-            {
-                if (HitBox.CheckCollision(General.Obstacles[i].HitBox))
-                {
-                    //General.Obstacles[i].CarCrashed();
-                }
-            }
-        }
     }
 }
